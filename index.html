@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Mirror - Reflect & Discover</title>
+    <meta name="description" content="A personal space to reflect on powerful psychological questions and generate beautiful shareable cards.">
+    <meta property="og:title" content="Mind Mirror">
+    <meta property="og:description" content="Reflect on life's big questions.">
+    <meta property="og:image" content="assets/og-preview.png"> <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Pacifico&family=Quicksand:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Basic background animation */
+        body {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .fade-in-slide {
+            animation: fadeInSlide 0.8s ease-out forwards;
+        }
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Glassmorphism helper */
+        .glassmorphic {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        /* Custom scrollbar for generated card answer */
+        .card-answer-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .card-answer-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .card-answer-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+        }
+        /* For hover prompts */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 160px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -80px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center text-gray-800 p-4 font-inter antialiased overflow-hidden">
+
+    <header class="w-full max-w-3xl mx-auto mb-6 text-center fade-in-slide">
+        <h1 class="text-5xl font-lora text-white font-bold mb-2">Mind Mirror</h1>
+        <p class="text-xl text-white opacity-80">Reflect. Discover. Grow.</p>
+    </header>
+
+    <main class="w-full max-w-xl mx-auto fade-in-slide" style="animation-delay: 0.2s;">
+        <div class="glassmorphic shadow-2xl rounded-2xl p-6 md:p-8">
+            <div class="mb-6">
+                <label for="category-select" class="block text-sm font-medium text-white mb-1">Choose a Theme:</label>
+                <select id="category-select" class="w-full p-3 bg-white bg-opacity-50 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-150 ease-in-out text-gray-700">
+                    </select>
+            </div>
+
+            <div id="question-card" class="bg-white bg-opacity-70 p-6 rounded-xl shadow-lg min-h-[150px] flex flex-col justify-center items-center text-center mb-6 transition-all duration-500 ease-in-out">
+                <div id="question-spinner" class="hidden">
+                    <svg class="animate-spin h-8 w-8 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                </div>
+                <p id="question-text" class="text-xl md:text-2xl font-lora text-gray-800">Loading your question...</p>
+                <span id="question-category-tooltip" class="tooltip">
+                    <span class="text-xs text-purple-600 mt-2 cursor-default">Hover for category info</span>
+                    <span class="tooltiptext">Category details will appear here.</span>
+                </span>
+            </div>
+
+            <div class="mb-6">
+                <label for="answer-input" class="block text-sm font-medium text-white mb-1">Your Reflection:</label>
+                <textarea id="answer-input" rows="4" class="w-full p-3 bg-white bg-opacity-50 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 ease-in-out text-gray-700 placeholder-gray-500" placeholder="Type your thoughts here..."></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0">
+                <button id="next-question-btn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                    Next Question
+                </button>
+                <button id="download-card-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                    Download Reflection Card
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="download-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50 transition-opacity duration-300 opacity-0">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300">
+            <h2 class="text-2xl font-lora font-bold text-gray-800 mb-6">Customize Your Reflection Card</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="user-name" class="block text-sm font-medium text-gray-700">Your Name (Optional):</label>
+                    <input type="text" id="user-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Anonymous">
+                </div>
+
+                <div>
+                    <label for="gender-select" class="block text-sm font-medium text-gray-700">Avatar Style:</label>
+                    <select id="gender-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="none">No Avatar</option>
+                        <option value="male">Style 1 (Masculine)</option>
+                        <option value="female">Style 2 (Feminine)</option>
+                        <option value="non-binary">Style 3 (Neutral)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="font-style-select" class="block text-sm font-medium text-gray-700">Font Style for Card:</label>
+                    <select id="font-style-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="font-lora">Serif (Lora)</option>
+                        <option value="font-quicksand">Sans-serif (Quicksand)</option>
+                        <option value="font-pacifico">Script (Pacifico)</option>
+                        <option value="font-roboto-mono">Mono (Roboto Mono)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="color-scheme-select" class="block text-sm font-medium text-gray-700">Card Theme:</label>
+                    <select id="color-scheme-select" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="classic-elegance">Classic Elegance</option>
+                        <option value="dark-academia">Dark Academia</option>
+                        <option value="minimal-zen">Minimal Zen</option>
+                        </select>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end space-x-3">
+                <button id="cancel-download-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md shadow-sm transition duration-150">Cancel</button>
+                <button id="confirm-download-btn" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm transition duration-150">Generate & Download</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="card-to-download" class="fixed -left-[9999px] top-0 w-[600px] h-[400px] p-8 shadow-lg overflow-hidden">
+        </div>
+
+
+    <footer class="w-full max-w-3xl mx-auto mt-8 text-center text-white text-opacity-70 text-sm pb-4">
+        <p>&copy; <span id="currentYear"></span> Mind Mirror. Crafted with introspection.</p>
+        <p>
+            <label for="theme-toggle" class="mr-2">Dark Mode:</label>
+            <input type="checkbox" id="theme-toggle" class="form-checkbox h-5 w-5 text-purple-600">
+        </label>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
